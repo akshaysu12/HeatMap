@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+ <html>
+   <head>
+     <meta charset="utf-8">
+     <title>Heatmap.gg</title>
+     <script type="text/javascript" src="d3.min.js"></script>
+     <script type="text/javascript" src="hexbin.js"></script>
+     <script type="text/javascript" src="d3-scale-chromatic.min.js"></script>
+     <h1 id="head"> BankofDank</h1>
+   </head>
+   <body>
+     <style>
+      #head
+      {
+        text-align: center;
+      }
+      #heatmap
+      {
+        margin-left: 220px;
+        display:inline;
+        text-align: top;
+      }
+      #death
+      {
+        margin-left: 200px;
+        display:inline;
+        text-align: top;
+      }
+      #info
+      {
+        margin-left: 250px;
+        display:inline;
+        text-align: top;
+      }
+      #subheader
+      {
+        border-style: solid;
+        border-width: 2px 0px 2px 0px;
+        margin-bottom: 10px;
+      }
+      #summonerInfo
+      {
+        text-align: center;
+        display: inline-block;
+        float:right;
+        height:500px;
+        width: 580px;
+      }
+
+     /* base styling applied to all hexagons */
+      .hexagon
+      {
+        stroke:#000000;
+        stroke-width: .5px;
+      }
+
+     </style>
+     <div id="subheader">
+       <h2 id="heatmap">Heatmap</h2>
+       <h2 id="death">Deaths</h2>
+       <h2 id="info">Summoner Info</h2>
+     </div>
+     <div id="summonerInfo">
+       <h4 id="champion"> Champion: Hecarim</h4>
+       <h4 id="lane"> Lane: Jungle</h4>
+       <h4 id="numDeaths"> Number of Deaths: 100</h4>
+     </div>
+
+     <script type="text/javascript">
+
+     //dynamically change summoner name based on user. this is definitely going to change.
+     var summonerName = "ftl";
+     var header = document.getElementById('head');
+     header.innerHTML = summonerName;
+
+      //all death locations are matches played from blue side
+      var dataset = [
+                      //Dardoch - 11 games jungle
+                      //[4478, 14017], [8719, 11622], [13114, 11038], [5406, 12544], [7504, 14026], [13500, 5023], [3242, 7856], [9974, 6162], [3630, 8883], [2727, 8061], [4008, 9332], [11879, 9315], [12437, 1883], [4597, 10476], [6663, 11390], [6830, 11398], [8585, 4632], [10008, 7880], [1914, 13134], [6439, 7946], [13976, 5500], [4169, 3642], [7905, 5552], [4134, 4390], [5105, 5128], [9972, 7656], [2015, 1736], [3804, 12748], [2128, 9528], [9913, 8912], [7813, 10281], [5321, 13048], [9301, 5990], [9992, 914], [7789, 3237], [3453, 3450], [7406, 8748], [1504, 12043], [10225, 6578], [11625, 5415], [10830, 1279], [3391, 8822], [1474, 9273], [3422, 8667], [5645, 6367], [1648, 8196], [5725, 6181], [5206, 13700], [1345, 12363], [6270, 3620], [14056, 7087], [7635, 6632], [7865, 1366], [5244, 1028], [1859, 12967], [6284, 2496], [13500, 2683], [3714, 10271], [4558, 899], [2411, 9802], [1052, 6206], [1548, 972]
+
+                      //Nick - 10 games hec jungle
+                      [6821, 7588], [6889, 2809], [7105, 9327], [11603, 7948], [11000, 4712], [3710, 9764], [10335, 10835], [1590, 6389], [1900, 3647], [5176, 3206], [7468, 7298], [8428, 7937], [12749, 12773], [6943, 4798], [13744, 3906], [3699, 13701], [5146, 9218], [9116, 9518], [8318, 5439], [2648, 11984], [6672, 7945], [5364, 13829], [8605, 5174], [4590, 7258], [1226, 5097],[5740, 9333], [7680, 8249], [11061, 4656], [6798, 6596], [12251, 1662], [5524, 5075], [4875, 1463], [11491, 3839], [6004, 7313], [3594, 4265], [6278, 4880], [1607, 7986], [1470, 954], [13994, 7274], [12531, 7235], [7914, 10798], [5998, 11143], [12844, 13107], [7424, 1215], [11789, 1434], [7250, 4853], [7328, 9108], [2969, 7680], [9915, 13637], [3832, 3806], [12277, 10475], [4598, 10432], [8116, 8335], [13500, 6386], [6033, 9100], [12286, 5364], [7472, 7900]
+
+                    ];
+      /* variables that hold summoner data - code block changes summoner info based on user*/
+
+      //number of deaths on heatmap
+      var numDeaths = dataset.length;
+      var header = document.getElementById('numDeaths');
+      header.innerHTML = "Number of Deaths: " + numDeaths;
+
+
+      /*****************
+      Function: rotate - This function rotates the dataset to set origin at top right corner instead of
+      top left which is default of svg. rotates data clockwise.
+      ******************/
+      var rotate = function(array)
+      {
+        var rotatedDataset = []
+        for (var i = 0; i < array.length; i++)
+        {
+          //midpoint = (7325,7280)
+          //quadrant 1 rotation
+          if (array[i][0] <= 7325  &&  array[i][1] <= 7280)
+           {
+             var coordinate = []
+             coordinate.push(array[i][1])
+             coordinate.push(2*(7325 - array[i][0]) + array[i][0])
+             rotatedDataset.push(coordinate)
+           }
+           //quadrant 2 rotation
+          else if (array[i][0] <= 7325 &&  array[i][1] >= 7280)
+           {
+             var coordinate = []
+             coordinate.push(array[i][0])
+             coordinate.push(2*(7325 - array[i][1]) + array[i][1])
+             rotatedDataset.push(coordinate)
+           }
+           //quadrant 3 rotation
+          else if (array[i][0] >= 7325 &&  array[i][1] >= 7280)
+           {
+             var coordinate = []
+             coordinate.push(array[i][1])
+             coordinate.push(array[i][0] - 2*(array[i][0] - 7325))
+             rotatedDataset.push(coordinate)
+           }
+           //quadrant 4 rotation
+           else
+            {
+              var coordinate = []
+              coordinate.push(array[i][0])
+              coordinate.push(array[i][1] - 2*(array[i][1] - 7280))
+              rotatedDataset.push(coordinate)
+            }
+        }
+        return rotatedDataset;
+      };
+
+      //rotate the inputed Dataset
+      var rotatedDataset = rotate(dataset);
+
+      //scales y values from summoner's rift data to corresponding locations on png image
+      var xScale = d3.scaleLinear()
+                          .domain([-570, 15220])
+                          .range([0, 512]);
+
+      //scales y values from summoner's rift data to corresponding locations on png image
+      var yScale = d3.scaleLinear()
+                          .domain([-420, 14980])
+                          .range([0, 512]);
+
+      /*****************
+      Function: scale - this function takes the rotated Dataset with inputs from rift points and scales
+      them to the 512x512 png image
+      *****************/
+      var scale = function(array)
+      {
+        for (var i = 0; i < array.length; i++)
+        {
+        array[i][0] = xScale(array[i][0]);
+        array[i][1] = yScale(array[i][1]);
+        }
+        return array;
+      };
+
+      //create the svg that will be used to place SR image and corresponding data on top of image
+      var svg = d3.select("body").append("svg")
+        .attr("width", 512)
+        .attr("height", 512)
+        .style("border-style", "solid")
+        .style("border-width", "5px")
+        .style("border-color", "#000000");
+
+      // add png image (SR) to svg
+      var img = svg.append("image")
+        .attr("xlink:href","minimap.png")
+        .attr("width", 512)
+        .attr("height", 512)
+
+      // scale data so now both rotatedDataset array and new scaledData array have locations corresponding to
+      // 512x512 png image SR
+      scaledData = scale(rotatedDataset);
+
+      /*********
+      code below is to generate hexagonal binning for points allocated by dataset
+      *********/
+      //area of hexagon being drawn to encompass points included for hexagonal binning
+      var hexbin = d3.hexbin()
+        .radius(15);              //radius may have to calculated later depending on size of svg (512x512)
+
+      //creates arrays of bins that will be used to determine size of hexagons
+      var bins = hexbin(scaledData);
+
+      //this creates a new array holding the number of points within each hexagon
+      var hexMax = function(binData)
+      {
+        var max = [];
+        for (var i = 0; i < binData.length; i++)
+        {
+          max.push(binData[i].length)
+        }
+        return max;
+      }
+      var maxArray = hexMax(bins);
+
+      //based on maxArray create array that will be used for generating the legend
+      var createLegendArray = function(array)
+      {
+        legendArray = [];
+        for(var i = 0; i < array.length; i++)
+        {
+          var search = false;
+          element = array[i];
+          for(var r = 0; r < legendArray.length; r++)
+          {
+            if( array[i] == legendArray[r])
+            {
+              search = true;
+            }
+          }
+
+          if (search == false)
+          {
+            legendArray.push(array[i])
+          }
+        }
+
+        function sortNumber(a,b)
+        {
+          return b - a
+        }
+
+        legendArray = legendArray.sort(sortNumber);
+        return legendArray;
+      }
+
+      //creates array with numbers according to legend
+      var legendNumbers = createLegendArray(maxArray);
+      //create duplicate legend array to use to create the text next to the legend hexagons
+      var dupLegNum = legendNumbers;
+      dupLegNum.unshift(0);
+
+      //function that uses the unique number of points in bins array to create a dataset that will generate the legends
+      var createLegend = function(array)
+      {
+        var yPos = 50;
+        var legend = [];
+        for(var i = 0; i < array.length; i++)
+        {
+          for(var r = 0; r < array[i]; r++)
+          {
+            legend.push([30, yPos])
+          }
+          yPos = yPos + 45;
+        }
+        return legend;
+      }
+
+      var legend = createLegend(legendNumbers);
+
+      //hexagon color based on diverging scale of red and blue
+      var color = d3.scaleSequential(d3.interpolateRdYlGn )
+        .domain([d3.max(bins, function(d) { return d.length; }), 0]);
+
+      //function for scaling opacity by hexagonal binning
+      var opacity = d3.scaleSqrt()
+        .domain([0, d3.max(maxArray, function(d) { return d; })])
+        .range([0.7,0.8]);
+
+      //function for scaling hexagon size by hexagonal binning
+      var radius = d3.scaleLinear()
+        // max input domain will be the most number of locations within a bin
+        .domain([0, d3.max(maxArray, function(d) { return d; })])
+        // max output range will be the double the most number of locations within a bin
+        // ***** important***** to do: need to establish a minimum that it can't go below.
+        .range([0, d3.max(maxArray, function(d) { return 2*d; })]);
+
+
+      //encodes hexagonal binning by color and by area.
+      svg.append("g")
+        .selectAll(".hexagon")
+        .data(hexbin(scaledData))
+        .enter()
+        .append("path")
+        .attr("class","hexagon")
+        .attr("d", hexbin.hexagon())
+        .attr("d", function(d)
+        {
+          return hexbin.hexagon(radius(d.length));
+        })
+        .attr("transform", function(d)
+        {
+          return "translate(" + d.x + "," + d.y + ")";
+        })
+        .style("fill", function(d)
+        {
+          return color(d.length);
+        })
+        .style("opacity", function(d)
+        {
+          return opacity(d.length);
+        });
+
+/*****************************************************************************************************************
+Code for second svg used to create the legend
+*****************************************************************************************************************/
+        //create the svg that will hold the legend figures
+        var svg2 = d3.select("body").append("svg")
+          .attr("x", 512)
+          .attr("y", 0)
+          .attr("width", 100)
+          .attr("height", 512)
+
+        svg2.append("g")
+          .selectAll(".hexagon")
+          .data(hexbin(legend))
+          .enter()
+          .append("path")
+          .attr("class","hexagon")
+          .attr("d", hexbin.hexagon())
+          .attr("d", function(d)
+          {
+            return hexbin.hexagon(radius(d.length));
+          })
+          .attr("transform", function(d)
+          {
+            return "translate(" + d.x + "," + d.y + ")";
+          })
+          .style("fill", function(d)
+          {
+            return color(d.length);
+          })
+          ;
+
+        var count = 0;
+        var createTextLegend = function(array)
+        {
+          var yPos = 95;
+          var legend = [];
+          for(var r = 0; r < array.length; r++)
+          {
+            legend.push([60, yPos]);
+            yPos = yPos + 45;
+          }
+
+          return legend;
+        }
+
+        var textData = createTextLegend(dupLegNum);
+
+        svg2.selectAll("text")
+          .data(textData)
+          .enter()
+          .append("text")
+          .text(function(d)
+          {
+            count = count + 1;
+            return dupLegNum[count];
+          })
+          .attr("x", function(d)
+          {
+            return d[0];
+          })
+          .attr("y", function(d)
+          {
+            return d[1];
+          })
+          .style("font-size", "20px");
+
+/*********************************************************************************************************************
+        // code used for putting circles at death locations.
+        var circles = svg.selectAll("circle")
+                   .data(rotatedDataset)
+                   .enter()
+                   .append("circle")
+                   //.attr("fill", "blue")
+                   .attr("cx", function(d)
+                   {
+                       return xScale(d[0]);
+                   })
+                   .attr("cy", function(d)
+                   {
+                        return yScale(d[1]);
+                   })
+                   .attr("r", 2);
+
+         // old code used for putting squares at death locations from purple side. hexagon placement replaced this
+         var rect = svg.selectAll("rect")
+                   .data(rotatePurple)
+                   .enter()
+                   .append("rect")
+                   .attr("fill", "purple")
+                   .attr("x", function(d)
+                   {
+                       return xScale(d[0]);
+                   })
+                   .attr("y", function(d)
+                   {
+                       return yScale(d[1]);
+                   })
+                   .attr("width", 5)
+                   .attr("height", 5);
+
+         //old code for generate color of hexagons - discrete colors between two endpoints
+         var color = d3.scaleLinear()
+         .domain([1, 5])
+         .range(["steelblue", "red"])
+         .interpolate(d3.interpolateLab);
+*********************************************************************************************************************/
+
+     </script>
+   </body>
+ </html>

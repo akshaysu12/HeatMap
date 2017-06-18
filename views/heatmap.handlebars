@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+ <html>
+   <head>
+     <meta charset="utf-8">
+     <title>Heatmap.gg</title>
+     <link rel="stylesheet" href ="/css/heatmapStyle.css">
+   </head>
+   <body>
+     <div id="subheader">
+       <h2 id="heatmap">Heatmap</h2>
+       <h2 id="death">Deaths</h2>
+       <h2 id="info">Summoner Info</h2>
+     </div>
+     <div id="summonerInfo">
+       <h4 id="summoner">{{summoner}}</h4>
+       <h4 id="champion">{{champion}}</h4>
+      <!-- <h4 id="numDeaths"> Number of Deaths: {{deaths}}</h4> -->
+     </div>
+     <script type="text/javascript" src="/js/d3.min.js"></script>
+     <script type="text/javascript" src="/js/hexbin.js"></script>
+     <script type="text/javascript" src="/js/d3-scale-chromatic.min.js"></script>
+     <script src="/js/hexagon.js"></script>
+   </body>
+ </html>

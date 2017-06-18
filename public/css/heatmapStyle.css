@@ -1,0 +1,43 @@
+#head
+{
+	text-align: center;
+}
+#heatmap
+{
+	margin-left: 220px;
+	display:inline;
+	text-align: top;
+}
+#death
+{
+	margin-left: 200px;
+	display:inline;
+	text-align: top;
+}
+#info
+{
+	margin-left: 250px;
+	display:inline;
+	text-align: top;
+}
+#subheader
+{
+	border-style: solid;
+	border-width: 2px 0px 2px 0px;
+	margin-bottom: 10px;
+}
+#summonerInfo
+{
+	text-align: center;
+	display: inline-block;
+	float:right;
+	height:500px;
+	width: 580px;
+}
+
+/* base styling applied to all hexagons */
+.hexagon
+{
+	stroke:#000000;
+	stroke-width: .5px;
+}

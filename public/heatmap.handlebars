@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="../../favicon.ico">
+    <title>HeatMap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="/css/mapStyle.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Heat Map</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="/">Home<span class="sr-only">(current)</span></a></li>
+        <li><a href="/">Search</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#">Created By: Akshay Subramanian</a></li>
+      </ul>
+
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-3" id="summoner">{{summoner}}</h1>
+        <p id="champDisplay">Champion:</p>
+        <p id="champion">{{champion}}</p>
+      </div>
+    </div>
+
+    <div class="main">
+      <!--
+        <div class="btn-group" data-toggle="buttons">
+          <label class="btn btn-primary active">
+            <input type="checkbox" checked autocomplete="off"> Deaths
+          </label>
+          <br />
+          <label class="btn btn-primary">
+            <input type="checkbox" autocomplete="off"> Wards
+          </label>
+          <br />
+          <label class="btn btn-primary">
+            <input type="checkbox" autocomplete="off"> Kills
+          </label>
+        </div>
+
+      <div id="data">
+        <input type="radio" id="deaths" name="deaths" value="deaths">
+        <label for "deaths">Deaths</label>
+
+        <br />
+        <input type="radio" id="deaths" name="deaths" value="deaths">
+        <label for "deaths">Kills</label>
+        <br/>
+        <input type="radio" id="deaths" name="deaths" value="deaths">
+        <label for "deaths">Wards</label>
+            </div>
+      -->
+
+      <div id="map">
+      </div>
+
+      <div id="legend">
+      </div>
+
+      <div id="info">
+        <h3> Interpreting Your Data </h3>
+        <h5> HeatMap displays your data (from blue side) based on two scales, Color and Size. Large, Red Hexagons represent areas that you have died more frequently in your past games. Smaller, green hexagons indicate areas with fewer deaths. </h5>
+      </div>
+
+    </div>
+
+
+    <br />
+    <br />
+
+    <!--
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h2>Heading</h2>
+          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+          <p><a class="btn btn-secondary" href="#" role="button">View details &raquo;</a></p>
+       </div>
+
+      </div>
+    </div> --> <!-- /container -->
+
+    <footer class="footer">
+      <div class="container">
+        <p id = "nonEndorse">Heat Map isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc. League of Legends © Riot Games, Inc.</p>
+      </div>
+    </footer>
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/d3.min.js"></script>
+    <script type="text/javascript" src="/js/hexbin.js"></script>
+    <script type="text/javascript" src="/js/d3-scale-chromatic.min.js"></script>
+    <script src="/js/hexagon.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  </body>
+</html>

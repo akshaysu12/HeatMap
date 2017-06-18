@@ -1,0 +1,2 @@
+// form submits to /heatmap
+// 
