@@ -79,7 +79,7 @@
  };
 
  //create the svg that will be used to place SR image and corresponding data on top of image
- var svg = d3.select("#map").append("svg")
+ var svg = d3.select("body").append("svg")
    .attr("width", 512)
    .attr("height", 512)
    .style("border-style", "solid")
@@ -88,27 +88,26 @@
 
  // add png image (SR) to svg
  var img = svg.append("image")
-   .attr("xlink:href","images/minimap.png")
+   .attr("xlink:href","/images/minimap.png")
    .attr("width", 512)
    .attr("height", 512)
 
  // scale data to match SR image
  scaledData = scale(rotatedDataset);
 
- //console.log(scaledData);
+ console.log(scaledData);
 
  /*********
  code below is to generate hexagonal binning for points allocated by dataset
  *********/
 
-
+/*
  //area of hexagon being drawn to encompass points included for hexagonal binning
  var hexbin = d3.hexbin()
-   .radius(30);
+   .radius(15);
 
  //creates arrays of bins that will be used to determine size of hexagons
  var bins = hexbin(scaledData);
- //console.log(bins);
 
  //this creates a new array holding the number of points within each hexagon
  var hexMax = function(binData)
@@ -121,10 +120,7 @@
    return max;
  }
  var maxArray = hexMax(bins);
- //console.log(maxArray);
 
-
-// can take out this function below and combine it with hexMax
  //based on maxArray create array that will be used for generating the legend
  var createLegendArray = function(array)
  {
@@ -158,11 +154,10 @@
 
  //creates array with numbers according to legend
  var legendNumbers = createLegendArray(maxArray);
- //console.log(legendNumbers);
 
  //create duplicate legend array to use to create the text next to the legend hexagons
  var dupLegNum = legendNumbers;
- dupLegNum.unshift(0);            //add a zero to the beginning of the array- why? not sure.
+ dupLegNum.unshift(0);
 
  //function that uses the unique number of points in bins array to create a dataset that will generate the legends
  var createLegend = function(array)
@@ -173,37 +168,33 @@
    {
      for(var r = 0; r < array[i]; r++)
      {
-       legend.push([50, yPos])
+       legend.push([30, yPos])
      }
-     yPos = yPos + 35;
+     yPos = yPos + 45;
    }
    return legend;
  }
 
  var legend = createLegend(legendNumbers);
- //console.log(legend);
 
  //hexagon color based on diverging scale of red and blue
- var color = d3.scaleSequential(d3.interpolateSpectral )
+ var color = d3.scaleSequential(d3.interpolateRdYlGn )
    .domain([d3.max(bins, function(d) { return d.length; }), 0]);
 
  //function for scaling opacity by hexagonal binning
-
  var opacity = d3.scaleSqrt()
    .domain([0, d3.max(maxArray, function(d) { return d; })])
-   .range([0.65,0.8]);
-
+   .range([0.7,0.8]);
 
  //function for scaling hexagon size by hexagonal binning
  var radius = d3.scaleLinear()
    // max input domain will be the most number of locations within a bin
    .domain([0, d3.max(maxArray, function(d) { return d; })])
 
-   // max output range will be the x* the most number of locations within a bin
+   // max output range will be the double the most number of locations within a bin
    // ***** important***** to do: need to establish a minimum that it can't go below.
-   .range([0, d3.max(maxArray, function(d) { return 4*d; })]);
+   .range([0, d3.max(maxArray, function(d) { return 2*d; })]);
 
-  //console.log(hexbin(legend));
 
  //encodes hexagonal binning by color and by area.
  svg.append("g")
@@ -228,77 +219,5 @@
    .style("opacity", function(d)
    {
      return opacity(d.length);
-   })
-   .on('click', clickit, true);
-
-   function clickit()
-   {
-     console.log("holy shit");
-   }
-
-console.log(d3.selectAll(".hexagon").attr("d"));
-/*
-   var svg2 = d3.select("#legend").append("svg")
-     .attr("x", 512)
-     .attr("y", 0)
-     .attr("width", 200)
-     .attr("height", 512)
-
-   svg2.append("g")
-     .selectAll(".hexagon")
-     .data(hexbin(legend))
-     .enter()
-     .append("path")
-     .attr("class","hexagon")
-     .attr("d", hexbin.hexagon())
-     .attr("d", function(d)
-     {
-       return hexbin.hexagon(radius(d.length));
-     })
-     .attr("transform", function(d)
-     {
-       return "translate(" + d.x + "," + d.y + ")";
-     })
-     .style("fill", function(d)
-     {
-       return color(d.length);
-     })
-     ;
-
-   var count = 0;
-   var createTextLegend = function(array)
-   {
-     var yPos = 95;
-     var legend = [];
-     for(var r = 0; r < array.length; r++)
-     {
-       legend.push([100, yPos]);
-       yPos = yPos + 45;
-     }
-
-     return legend;
-   }
-
-   var textData = createTextLegend(dupLegNum);
-
-
-   svg2.selectAll("text")
-     .data(textData)
-     .enter()
-     .append("text")
-     .text(function(d)
-     {
-       count = count + 1;
-       return dupLegNum[count];
-     })
-     .attr("x", function(d)
-     {
-       return d[0];
-     })
-     .attr("y", function(d)
-     {
-       return d[1];
-     })
-     .style("font-size", "20px")
-     .style("fill", "#FFFFFF");
+   });
 */
