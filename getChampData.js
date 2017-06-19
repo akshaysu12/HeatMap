@@ -111,8 +111,10 @@ function getPostInsertData(summName, champName)
 
 function getMatchList(summ)
 {
+  console.log("inside getMatchList summ looks like: ");
+  console.log(summ);
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/matchList?id="+summ.summonerId +'&champid='+summ.championId, true)
+  req.open("GET", "http://dev.akshaysubramanian.com/matchList?id=" + summ.accountId +'&champid=' + summ.championId, true)
   req.addEventListener('load', function()
   {
     var matchList = JSON.parse(req.response);
@@ -121,7 +123,7 @@ function getMatchList(summ)
       window.location.replace("http://dev.akshaysubramanian.com/noData");
     }
 
-    if (summ.recentMatchId == matchList.matches[0].matchId)
+    if (summ.recentMatchId == matchList.matches[0].gameId)
     {
       console.log("skipped getting coordinates");
       heatmap();
@@ -129,8 +131,10 @@ function getMatchList(summ)
     else
     {
       console.log("calling getMatchData");
-      summ.recentMatchId = matchList.matches[0].matchId;
-      getMatchData(summ, matchList);
+      summ.recentMatchId = matchList.matches[0].gameId;
+      console.log("most recent match id is: " + summ.recentMatchId);
+      //getMatchData(summ, matchList);
+      findParticipantData(summ, matchList)
     }
 
   })
@@ -146,16 +150,17 @@ function getMatchData(summ, matchList)
   {
     (function(x)
     {
-      var matchId = matchList.matches[x].matchId;
+      var matchId = matchList.matches[x].gameId;
       var req = new XMLHttpRequest();
       req.open("GET", "http://dev.akshaysubramanian.com/matchData?matchId="+matchId,true)
       req.addEventListener('load', function()
       {
         var matchData = JSON.parse(req.response);
-        var participantID = findParticipantId(matchData,summ.championId);
+        var participantID = findParticipantId(summ.accountId);
+        console.log("curent part id is: " + participantID)
         if (participantID != 11)
         {
-          var frames = matchData.timeline.frames;
+          var frames = matchData.frames;
           for (var i = 2; i < frames.length; i++)
           {
             var events = frames[i].events;
@@ -166,7 +171,7 @@ function getMatchData(summ, matchList)
                 location.push(events[r].position.x);
                 location.push(events[r].position.y);
                 location = JSON.stringify(location);
-                addCoordinate(summ.championId, summ.summonerId, location, matchId);
+                addCoordinate(summ.championId, summ.accountId, location, matchId);
               }
             }
           }
@@ -177,7 +182,7 @@ function getMatchData(summ, matchList)
         if (x == 7 || matchList.matches[x+1] == summ.recentMatchId)
         {
           console.log("calling heatmap");
-          updateMatch(summ.championId,summ.summonerId,matchList.matches[0].matchId);
+          updateMatch(summ.championId,summ.accountId,summ.recentMatchId);
         }
       })
       req.send(null);
@@ -186,21 +191,30 @@ function getMatchData(summ, matchList)
   }
 }
 
-function findParticipantId(matchData, championId)
+function findParticipantId(summ, matchList)
 {
-  var participantsData = matchData.participants;
-  for (var i = 0; i < participantsData.length; i++) {
-    if (participantsData[i].championId == championId)
+  console.log(accountId)
+  var req = new XMLHttpRequest();
+  req.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?accountId='+summ.accountId, true)
+  req.addEventListener('load', function()
+  {
+    var participantData = JSON.parse(req.response);
+    var participants = participantData.participantIdentities;
+    for (summoner in participants)
     {
-      if (participantsData[i].teamId == 100){
-        return participantsData[i].participantId;
-      }
-
-      else {
-        return 11;
+      if (participants.player.currentAccountId == summ.accountId)
+      {
+        //only taking data from blue side so participant id must be 1-5
+        if (participants.player.currentAccountId < 6) {
+          return participants.participantId;
+        }
+        else {
+          return participants.participantId;
+        }
       }
     }
-  }
+  })
+  req.send(null);
 }
 
 function addCoordinate(champName, summName, coordinate, matchId)

@@ -1,7 +1,8 @@
 
 
-document.addEventListener('DOMContentLoaded', getchampList);
+document.addEventListener('DOMContentLoaded', insertData);
 
+/*
 function getchampList()
 {
   var req = new XMLHttpRequest();
@@ -15,22 +16,41 @@ function getchampList()
   })
   req.send(null);
 }
+*/
 
 
 function insertData(champs)
 {
-  for (key in champs)
+  var firstReq = new XMLHttpRequest();
+  firstReq.open("GET", 'http://dev.akshaysubramanian.com/getChampionListData', true)
+  firstReq.addEventListener('load', function()
   {
-    console.log("insert");
-    var req = new XMLHttpRequest();
-    req.open("GET", 'http://dev.akshaysubramanian.com/insertChampData?name=' + champs[key].name + '&id=' + champs[key].id, true)
-    req.addEventListener('load', function()
+    var allChamps = JSON.parse(firstReq.response)
+    console.log(allChamps)
+    var champs = allChamps.data
+    console.log(allChamps.data)
+    /*
+    for (key in champs)
     {
-      res = JSON.parse(req.response);
-      console.log(res);
-    });
-    req.send(null);
-  }
+      console.log(champs[key].name);
+      console.log(champs[key].id);
+    }
+    */
+
+    for (key in champs)
+    {
+      var req = new XMLHttpRequest();
+      req.open("GET", 'http://dev.akshaysubramanian.com/insertChampData?name=' + champs[key].name + '&id=' + champs[key].id, true)
+      req.addEventListener('load', function()
+      {
+        res = JSON.parse(req.response);
+        console.log(res);
+      });
+      req.send(null);
+    }
+
+  })
+  firstReq.send(null)
 }
 
 /* Add this endpoint to backend.js if you need to reinsert all of the champions

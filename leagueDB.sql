@@ -1,10 +1,13 @@
 CREATE TABLE user (
   id              int(11)           NOT NULL AUTO_INCREMENT,
   summonerName    varchar(255)      NOT NULL,
-  summonerId      int(11)           NOT NULL,
+  accountId       int(11) UNSIGNED  NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY (summonerName)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `user`;
+
 
 INSERT INTO user (summonerName, summonerId) VALUES ("ftl", 56692694);
 

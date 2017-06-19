@@ -40,45 +40,6 @@ app.get('/noData', function(req,res) {
   res.render('noData');
 });
 
-/*
-Endpoint to insert all champion data into database --commented out for now
-app.get('/insertData', function(req,res)
-{
-  res.render('insertData');
-});
-
-
-/****
-Functions to reinsert all champion data back into the database
-****/
-app.get('/getChampionListData', function(req,res,next) {
-  request('https://na1.api.riotgames.com/lol/static-data/v3/champions?locale=en_US&dataById=false&api_key=90f3289d-8a5b-42cd-9f23-c9f16a6c7213', function(err,response,body) {
-    if (err){
-      next(err);
-      return;
-    }
-    console.log(body);
-    var champData = JSON.parse(body);
-    res.send(champData);
-  })
-})
-
-app.get('/insertChampData', function(req,res,next){
-  console.log(req.query.name);
-  mysql.pool.query('INSERT INTO champion (`championName`, `championId`) VALUES (?,?)', [req.query.name, req.query.id], function(err, result)
-  {
-    if(err)
-    {
-      next(err);
-      return;
-    }
-    console.log(result);
-    res.send(JSON.stringify(result));
-  });
-});
-
-
-
 app.get('/heatmap', function(req,res) {
   console.log("heatmap db");
   var context = {};
@@ -118,18 +79,16 @@ app.get('/addUser', function(req,res,next)
     {
       var summData = JSON.parse(body);
       console.log(summData);
-      var id = summData.accountId;
+      var id;
       var exists = true;
-      /*
       for (var key in summData) {
         console.log(key);
         id = summData[key].id;
       }
-      */
       console.log(id);
 
       console.log("insert");
-      mysql.pool.query('INSERT INTO user (`summonerName`, `accountId`) VALUES (?,?)', [summName, id], function (err,result)
+      mysql.pool.query('INSERT INTO user (`summonerName`, `summonerId`) VALUES (?,?)', [summName, id], function (err,result)
       {
         if(err)
         {
@@ -154,7 +113,7 @@ app.get('/addUser', function(req,res,next)
 
 app.get('/getDatabaseData', function(req,res,next) {
   var summ = {};
-  mysql.pool.query('SELECT m.recentMatchId, u.accountId, c.championId FROM recentMatch m INNER JOIN user u ON u.id = m.summoner INNER JOIN champion c ON c.id = m.champ WHERE champ = (SELECT id FROM champion WHERE championName = ?) AND summoner = (SELECT id FROM user WHERE summonerName = ?)', [req.query.champ, req.query.name], function(err, rows)
+  mysql.pool.query('SELECT m.recentMatchId, u.summonerId, c.championId FROM recentMatch m INNER JOIN user u ON u.id = m.summoner INNER JOIN champion c ON c.id = m.champ WHERE champ = (SELECT id FROM champion WHERE championName = ?) AND summoner = (SELECT id FROM user WHERE summonerName = ?)', [req.query.champ, req.query.name], function(err, rows)
   {
     if (err){
       next(err);
@@ -167,7 +126,7 @@ app.get('/getDatabaseData', function(req,res,next) {
 
     else {
       console.log(rows);
-      summ.accountId = rows[0].accountId;
+      summ.summonerId = rows[0].summonerId;
       summ.recentMatchId = rows[0].recentMatchId;
       summ.championId = rows[0].championId;
       res.send(summ);
@@ -188,11 +147,27 @@ app.get('/insertIntorecentMatch', function(req,res,next)
     }
     res.send(JSON.stringify(result));
   });
+  /*
+  feel like this should work but it only works sometimes? need to look more into this. For now just moved getting the data into a new function
+  mysql.pool.query('SELECT u.summonerId, c.championId FROM user u INNER JOIN recentMatch r ON r.summoner = u.id INNER JOIN champion c ON c.id = r.champ WHERE u.summonerName = ? AND c.championName = ?', [req.query.name, req.query.champ], function(err, rows)
+  {
+    if(err)
+    {
+      next(err);
+      return;
+    }
+    console.log(rows);
+    summ.summonerId = rows[0].summonerId;
+    summ.championId = rows[0].championId;
+    summ.recentMatchId = 0;
+    res.send(summ);
+  });
+  */
 });
 
 app.get('/postInsertData', function(req,res,next) {
   var summ = {};
-  mysql.pool.query('SELECT m.recentMatchId, u.accountId, c.championId FROM recentMatch m INNER JOIN user u ON u.id = m.summoner INNER JOIN champion c ON c.id = m.champ WHERE champ = (SELECT id FROM champion WHERE championName = ?) AND summoner = (SELECT id FROM user WHERE summonerName = ?)', [req.query.champ, req.query.name], function(err, rows)
+  mysql.pool.query('SELECT m.recentMatchId, u.summonerId, c.championId FROM recentMatch m INNER JOIN user u ON u.id = m.summoner INNER JOIN champion c ON c.id = m.champ WHERE champ = (SELECT id FROM champion WHERE championName = ?) AND summoner = (SELECT id FROM user WHERE summonerName = ?)', [req.query.champ, req.query.name], function(err, rows)
   {
     if (err){
       next(err);
@@ -200,7 +175,7 @@ app.get('/postInsertData', function(req,res,next) {
     }
 
     console.log(rows);
-    summ.accountId = rows[0].accountId;
+    summ.summonerId = rows[0].summonerId;
     summ.recentMatchId = rows[0].recentMatchId;
     summ.championId = rows[0].championId;
     res.send(summ);
@@ -209,9 +184,8 @@ app.get('/postInsertData', function(req,res,next) {
 
 app.get('/matchList', function(req,res,next)
 {
-  console.log("call to matchList params are id=" + req.query.id + "champ id = " + req.query.champid)
   //need to add condition if there is no games played
-  request('https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/'+ req.query.id + '?champion=' + req.query.champid + '&' + credentials.apiKEY, function(err,response,body)
+  request('https://na.api.riotgames.com/api/lol/NA/v2.2/matchlist/by-summoner/'+ req.query.id + '?championIds=' + req.query.champid + '&' + credentials.apiKEY, function(err,response,body)
   {
     if (!err && response.statusCode < 400)
     {
@@ -229,13 +203,13 @@ app.get('/matchList', function(req,res,next)
 
 app.get('/matchData', function(req,res,next)
 {
-  console.log("retrieving match Data for match: " + req.query.matchId);
-  request('https://na1.api.riotgames.com/lol/match/v3/timelines/by-match/'+req.query.matchId+'?'+credentials.apiKEY, function(err,response,body)
+  console.log("retrieving match Data");
+  request('https://na.api.riotgames.com/api/lol/NA/v2.2/match/'+req.query.matchId+'?includeTimeline=True&'+credentials.apiKEY, function(err,response,body)
   {
     if (!err && response.statusCode < 400)
     {
-      var timelineData = JSON.parse(body);
-      res.send(timelineData);
+      var matchData = JSON.parse(body);
+      res.send(matchData);
     }
     else {
       console.log(err);
@@ -246,32 +220,11 @@ app.get('/matchData', function(req,res,next)
   });
 });
 
-app.get('/getParticipantData', function(req,res,next)
-{
-  console.log("get participant data called");
-  request('https://na1.api.riotgames.com/lol/match/v3/matches/' + req.query.id + '?' + credentials.apiKEY, function(err, response, body)
-  {
-    if (!err && response.statusCode < 400)
-    {
-      var matchData = JSON.parse(body);
-      console.log(matchData)
-      res.send(matchData);
-    }
-    else {
-      console.log(err);
-      if(response){
-        console.log(response.statusCode);
-      }
-    }
-  })
-
-});
-
 app.get('/addCoordinate', function(req,res,next)
 {
   console.log("add coordinate");
   var context = {};
-  mysql.pool.query('INSERT INTO coordinates (`champId`, `summId`, `coordinate`, `matchId`) VALUES ((SELECT id FROM champion WHERE championId = ?),(SELECT id FROM user WHERE accountId = ?),?,?)', [req.query.champ, req.query.summ, req.query.loc, req.query.match], function(err,result)
+  mysql.pool.query('INSERT INTO coordinates (`champId`, `summId`, `coordinate`, `matchId`) VALUES ((SELECT id FROM champion WHERE championId = ?),(SELECT id FROM user WHERE summonerId = ?),?,?)', [req.query.champ, req.query.summ, req.query.loc, req.query.match], function(err,result)
   {
     if(err)
     {
@@ -287,7 +240,7 @@ app.get('/updateMatch', function(req,res,next)
 {
   var context = {};
   console.log("update recent match");
-  mysql.pool.query('UPDATE recentMatch SET recentMatchId = ? WHERE champ=(SELECT id FROM champion WHERE championId = ?) AND summoner=(SELECT id FROM user WHERE accountId = ?)', [req.query.match, req.query.champ, req.query.summ], function(err,result)
+  mysql.pool.query('UPDATE recentMatch SET recentMatchId = ? WHERE champ=(SELECT id FROM champion WHERE championId = ?) AND summoner=(SELECT id FROM user WHERE summonerId = ?)', [req.query.match, req.query.champ, req.query.summ], function(err,result)
   {
     if(err)
     {
