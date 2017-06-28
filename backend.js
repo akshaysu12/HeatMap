@@ -235,6 +235,7 @@ app.get('/matchData', function(req,res,next)
     if (!err && response.statusCode < 400)
     {
       var timelineData = JSON.parse(body);
+      console.log(timelineData);
       res.send(timelineData);
     }
     else {
