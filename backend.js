@@ -235,7 +235,6 @@ app.get('/matchData', function(req,res,next)
     if (!err && response.statusCode < 400)
     {
       var timelineData = JSON.parse(body);
-      console.log(timelineData);
       res.send(timelineData);
     }
     else {
@@ -249,8 +248,8 @@ app.get('/matchData', function(req,res,next)
 
 app.get('/getParticipantData', function(req,res,next)
 {
-  console.log("get participant data called");
-  request('https://na1.api.riotgames.com/lol/match/v3/matches/' + req.query.id + '?' + credentials.apiKEY, function(err, response, body)
+  console.log("get participant data called for match: " + req.query.matchId);
+  request('https://na1.api.riotgames.com/lol/match/v3/matches/' + req.query.matchId + '?' + credentials.apiKEY, function(err, response, body)
   {
     if (!err && response.statusCode < 400)
     {

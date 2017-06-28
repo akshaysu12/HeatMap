@@ -157,29 +157,29 @@ function getMatchData(summ, matchList)
       req.addEventListener('load', function()
       {
         var matchData = JSON.parse(req.response);
-        console.log("match data:");
-        console.log(matchData);
         //var participantID = findParticipantId(summ.accountId);
         var reqTwo = new XMLHttpRequest();
-        reqTwo.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?accountId='+summ.accountId, true)
+        reqTwo.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?matchId='+ matchId, true)
         reqTwo.send(null);
         reqTwo.addEventListener('load', function()
         {
           var participantID = -1;
           var participantData = JSON.parse(reqTwo.response);
           var participants = participantData.participantIdentities;
-          for (summoner in participants)
+          for (i = 0; i < participants.length; i++)
           {
-            if (participants.player.currentAccountId == summ.accountId)
+            console.log("each summoner in list looks like: ")
+            console.log(participants[i]);
+            if (participants[i].player.currentAccountId == summ.accountId)
             {
               //only taking data from blue side so participant id must be 1-5
-              if (participants.player.currentAccountId < 6) {
-                 participantID = participants.participantId;
+              if (participants[i].participantId < 6) {
+                 participantID = participants[i].participantId;
               }
             }
           }
 
-          console.log("curent part id is: " + participantID)
+          console.log("current part id is: " + participantID)
           if (participantID != -1)
           {
             var frames = matchData.frames;
@@ -187,8 +187,9 @@ function getMatchData(summ, matchList)
             {
               var events = frames[i].events;
               for (var r = 0; r < events.length; r++) {
-                if (events[r].eventType == "CHAMPION_KILL" && events[r].victimId == participantID)
+                if (events[r].type == "CHAMPION_KILL" && events[r].victimId == participantID)
                 {
+                  console.log("found a kill")
                   var location = [];
                   location.push(events[r].position.x);
                   location.push(events[r].position.y);
