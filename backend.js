@@ -199,7 +199,7 @@ app.get('/postInsertData', function(req,res,next) {
       return;
     }
 
-    console.log(rows);
+    //console.log(rows);
     summ.accountId = rows[0].accountId;
     summ.recentMatchId = rows[0].recentMatchId;
     summ.championId = rows[0].championId;
@@ -254,7 +254,7 @@ app.get('/getParticipantData', function(req,res,next)
     if (!err && response.statusCode < 400)
     {
       var matchData = JSON.parse(body);
-      console.log(matchData)
+      //console.log(matchData)
       res.send(matchData);
     }
     else {

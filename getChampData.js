@@ -130,34 +130,44 @@ function getMatchList(summ)
     }
     else
     {
+      var traceBack = 3;
+      if (summ.recentMatchId != null)
+      {
+        traceBack = 0;
+        while (matchList.matches[traceBack].gameId != summ.recentMatchId)
+        {
+          console.log("current match is: " + matchList.matches[traceBack].gameId)
+          console.log("match to stop at is: " + summ.recentMatchId)
+          traceBack = traceBack + 1;
+        }
+      }
+      console.log("number of games to go backwards = " + traceBack);
       console.log("calling getMatchData");
       summ.recentMatchId = matchList.matches[0].gameId;
       console.log("most recent match id is: " + summ.recentMatchId);
-      getMatchData(summ, matchList);
-      //findParticipantData(summ, matchList)
+      getMatchData(summ, matchList, traceBack);
     }
 
   })
   req.send(null);
 }
 
-function getMatchData(summ, matchList)
+function getMatchData(summ, matchList, traceBack)
 {
-  var matchCount = 0;
-  var deaths = [];
+  console.log("number of games to go backwards in getMatchData = " + traceBack);
+  var matchCount = traceBack;
 
-  while (matchCount < 4 && matchList.matches[matchCount] != summ.recentMatchId)
+  while (matchCount >= 0)
   {
     (function(x)
     {
       var matchId = matchList.matches[x].gameId;
       var req = new XMLHttpRequest();
-      req.open("GET", "http://dev.akshaysubramanian.com/matchData?matchId="+matchId,true)
+      req.open("GET", "http://dev.akshaysubramanian.com/matchData?matchId=" + matchId,true)
       req.send(null);
       req.addEventListener('load', function()
       {
         var matchData = JSON.parse(req.response);
-        //var participantID = findParticipantId(summ.accountId);
         var reqTwo = new XMLHttpRequest();
         reqTwo.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?matchId='+ matchId, true)
         reqTwo.send(null);
@@ -168,8 +178,6 @@ function getMatchData(summ, matchList)
           var participants = participantData.participantIdentities;
           for (i = 0; i < participants.length; i++)
           {
-            console.log("each summoner in list looks like: ")
-            console.log(participants[i]);
             if (participants[i].player.currentAccountId == summ.accountId)
             {
               //only taking data from blue side so participant id must be 1-5
@@ -179,7 +187,6 @@ function getMatchData(summ, matchList)
             }
           }
 
-          console.log("current part id is: " + participantID)
           if (participantID != -1)
           {
             var frames = matchData.frames;
@@ -189,7 +196,6 @@ function getMatchData(summ, matchList)
               for (var r = 0; r < events.length; r++) {
                 if (events[r].type == "CHAMPION_KILL" && events[r].victimId == participantID)
                 {
-                  console.log("found a kill")
                   var location = [];
                   location.push(events[r].position.x);
                   location.push(events[r].position.y);
@@ -199,47 +205,19 @@ function getMatchData(summ, matchList)
               }
             }
           }
-        })
-        console.log(matchCount);
+          console.log("x is:" + x);
 
-        if (x == 4 || matchList.matches[x+1] == summ.recentMatchId)
-        {
-          console.log("calling heatmap");
-          updateMatch(summ.championId,summ.accountId,summ.recentMatchId);
-        }
+          if (matchList.matches[x].gameId == summ.recentMatchId)
+          {
+            console.log("calling heatmap");
+            updateMatch(summ.championId,summ.accountId,summ.recentMatchId);
+          }
+        })
       })
     }(matchCount));
-    matchCount = matchCount + 1;
+    matchCount = matchCount - 1;
   }
 }
-
-/*
-function findParticipantId(summ, matchList)
-{
-  console.log(accountId)
-  var req = new XMLHttpRequest();
-  req.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?accountId='+summ.accountId, true)
-  req.addEventListener('load', function()
-  {
-    var participantData = JSON.parse(req.response);
-    var participants = participantData.participantIdentities;
-    for (summoner in participants)
-    {
-      if (participants.player.currentAccountId == summ.accountId)
-      {
-        //only taking data from blue side so participant id must be 1-5
-        if (participants.player.currentAccountId < 6) {
-          return participants.participantId;
-        }
-        else {
-          return participants.participantId;
-        }
-      }
-    }
-  })
-  req.send(null);
-}
-*/
 
 function addCoordinate(champName, summName, coordinate, matchId)
 {
