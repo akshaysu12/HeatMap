@@ -199,7 +199,7 @@ app.get('/postInsertData', function(req,res,next) {
       return;
     }
 
-    //console.log(rows);
+    console.log(rows);
     summ.accountId = rows[0].accountId;
     summ.recentMatchId = rows[0].recentMatchId;
     summ.championId = rows[0].championId;
@@ -248,13 +248,13 @@ app.get('/matchData', function(req,res,next)
 
 app.get('/getParticipantData', function(req,res,next)
 {
-  console.log("get participant data called for match: " + req.query.matchId);
-  request('https://na1.api.riotgames.com/lol/match/v3/matches/' + req.query.matchId + '?' + credentials.apiKEY, function(err, response, body)
+  console.log("get participant data called");
+  request('https://na1.api.riotgames.com/lol/match/v3/matches/' + req.query.id + '?' + credentials.apiKEY, function(err, response, body)
   {
     if (!err && response.statusCode < 400)
     {
       var matchData = JSON.parse(body);
-      //console.log(matchData)
+      console.log(matchData)
       res.send(matchData);
     }
     else {
@@ -336,5 +336,5 @@ Set up server to listen on port
 
 app.listen(app.get('port'), function()
 {
-  console.log('Express started on http://dev.akshaysubramanian.com:'+ app.get('port') + '; press Ctrl-C to terminate.');
+  console.log('Express started on http://localhost:'+ app.get('port') + '; press Ctrl-C to terminate.');
 });

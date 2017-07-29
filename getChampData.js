@@ -130,7 +130,7 @@ function getMatchList(summ)
     }
     else
     {
-      var traceBack = 3;
+      var traceBack = 9;
       if (summ.recentMatchId != null)
       {
         traceBack = 0;
@@ -139,6 +139,9 @@ function getMatchList(summ)
           console.log("current match is: " + matchList.matches[traceBack].gameId)
           console.log("match to stop at is: " + summ.recentMatchId)
           traceBack = traceBack + 1;
+        }
+        if (traceBack > 9) {
+          traceBack = 9;
         }
       }
       console.log("number of games to go backwards = " + traceBack);
