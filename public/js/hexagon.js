@@ -9,7 +9,7 @@ function getDataset()
   console.log(champName);
 
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/returnData?name="+ summName +"&champ="+ champName, true);
+  req.open("GET", "http://lolheatmap.com/returnData?name="+ summName +"&champ="+ champName, true);
   req.addEventListener('load', function()
   {
     var res = JSON.parse(req.response);

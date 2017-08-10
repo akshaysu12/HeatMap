@@ -23,27 +23,31 @@ function checkUser()
     var summName = document.getElementById('summName').value;
     var champName = document.getElementById('champName').value;
 
-    console.log(summName);
-    console.log(champName);
+    if (summName == "exampleUser" && champName == "exampleChamp") {
+      console.log("example achieved!")
+      heatmap();
+    }
 
-    var req = new XMLHttpRequest();
-    req.open("GET", "http://dev.akshaysubramanian.com/checkUser?name=" + summName, true)
-    req.addEventListener('load', function()
-    {
-      var summ = JSON.parse(req.response);
-      console.log(summ);
-      if (summ.length == 0)
+    else {
+      var req = new XMLHttpRequest();
+      req.open("GET", "http://lolheatmap.com/checkUser?name=" + summName, true)
+      req.addEventListener('load', function()
       {
-        console.log("add User");
-        addUser(summName,champName);
-      }
+        var summ = JSON.parse(req.response);
+        console.log(summ);
+        if (summ.length == 0)
+        {
+          console.log("add User");
+          addUser(summName,champName);
+        }
 
-      else {
-        console.log("getData");
-        getDatabaseData(summName, champName);
-      }
+        else {
+          console.log("getData");
+          getDatabaseData(summName, champName);
+        }
 
-    })
+      })
+    }
     req.send(null);
   });
 }
@@ -51,7 +55,7 @@ function checkUser()
 function addUser(summName,champName)
 {
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/addUser?name=" + summName, true)
+  req.open("GET", "http://lolheatmap.com/addUser?name=" + summName, true)
   req.addEventListener('load', function()
   {
     var summ = JSON.parse(req.response);
@@ -64,7 +68,7 @@ function addUser(summName,champName)
 function getDatabaseData(summName, champName)
 {
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/getDatabaseData?name=" + summName + "&champ="+champName, true)
+  req.open("GET", "http://lolheatmap.com/getDatabaseData?name=" + summName + "&champ="+champName, true)
   req.addEventListener('load', function()
   {
     var summ = JSON.parse(req.response);
@@ -86,7 +90,7 @@ function getDatabaseData(summName, champName)
 function insertNewrow(summName, champName)
 {
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/insertIntorecentMatch?name="+summName+"&champ="+champName, true)
+  req.open("GET", "http://lolheatmap.com/insertIntorecentMatch?name="+summName+"&champ="+champName, true)
   req.addEventListener('load', function()
   {
     var res = JSON.parse(req.response);
@@ -99,7 +103,7 @@ function insertNewrow(summName, champName)
 function getPostInsertData(summName, champName)
 {
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/postInsertData?name="+summName+"&champ="+champName, true)
+  req.open("GET", "http://lolheatmap.com/postInsertData?name="+summName+"&champ="+champName, true)
   req.addEventListener('load', function()
   {
     var summ = JSON.parse(req.response);
@@ -114,13 +118,13 @@ function getMatchList(summ)
   console.log("inside getMatchList summ looks like: ");
   console.log(summ);
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/matchList?id=" + summ.accountId +'&champid=' + summ.championId, true)
+  req.open("GET", "http://lolheatmap.com/matchList?id=" + summ.accountId +'&champid=' + summ.championId, true)
   req.addEventListener('load', function()
   {
     var matchList = JSON.parse(req.response);
     console.log(matchList);
     if (matchList.endIndex == 0){
-      window.location.replace("http://dev.akshaysubramanian.com/noData");
+      window.location.replace("http://lolheatmap.com/noData");
     }
 
     if (summ.recentMatchId == matchList.matches[0].gameId)
@@ -130,7 +134,7 @@ function getMatchList(summ)
     }
     else
     {
-      var traceBack = 9;
+      var traceBack = 15 ;
       if (summ.recentMatchId != null)
       {
         traceBack = 0;
@@ -140,8 +144,8 @@ function getMatchList(summ)
           console.log("match to stop at is: " + summ.recentMatchId)
           traceBack = traceBack + 1;
         }
-        if (traceBack > 9) {
-          traceBack = 9;
+        if (traceBack > 15) {
+          traceBack = 15;
         }
       }
       console.log("number of games to go backwards = " + traceBack);
@@ -166,13 +170,13 @@ function getMatchData(summ, matchList, traceBack)
     {
       var matchId = matchList.matches[x].gameId;
       var req = new XMLHttpRequest();
-      req.open("GET", "http://dev.akshaysubramanian.com/matchData?matchId=" + matchId,true)
+      req.open("GET", "http://lolheatmap.com/matchData?matchId=" + matchId,true)
       req.send(null);
       req.addEventListener('load', function()
       {
         var matchData = JSON.parse(req.response);
         var reqTwo = new XMLHttpRequest();
-        reqTwo.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?matchId='+ matchId, true)
+        reqTwo.open("GET", 'http://lolheatmap.com/getParticipantData?matchId='+ matchId, true)
         reqTwo.send(null);
         reqTwo.addEventListener('load', function()
         {
@@ -226,7 +230,7 @@ function addCoordinate(champName, summName, coordinate, matchId)
 {
   console.log("add coordinate");
   var req  = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/addCoordinate?champ="+ champName +"&summ="+ summName + "&loc=" + coordinate + "&match=" + matchId, true);
+  req.open("GET", "http://lolheatmap.com/addCoordinate?champ="+ champName +"&summ="+ summName + "&loc=" + coordinate + "&match=" + matchId, true);
   req.addEventListener('load', function()
   {
     var res = JSON.parse(req.response);
@@ -242,7 +246,7 @@ function updateMatch(champName, summName, matchId)
   console.log("update:" + matchId);
   console.log("updating match");
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/updateMatch?champ="+ champName +"&summ="+ summName + "&match=" + matchId, true);
+  req.open("GET", "http://lolheatmap.com/updateMatch?champ="+ champName +"&summ="+ summName + "&match=" + matchId, true);
   req.addEventListener('load', function()
   {
     var res = JSON.parse(req.response);
@@ -258,6 +262,5 @@ function heatmap()
 {
   var summDisplay = document.getElementById('summName').value;
   var champDisplay = document.getElementById('champName').value;
-  console.log("heatmap client");
-  window.location.replace("http://dev.akshaysubramanian.com/heatmap?name="+summDisplay+"&champ=" +champDisplay);
+  window.location.replace("http://lolheatmap.com/heatmap?name="+summDisplay+"&champ=" +champDisplay);
 };

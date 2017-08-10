@@ -336,5 +336,5 @@ Set up server to listen on port
 
 app.listen(app.get('port'), function()
 {
-  console.log('Express started on http://dev.akshaysubramanian.com:'+ app.get('port') + '; press Ctrl-C to terminate.');
+  console.log('Express started on http://lolheatmap.com:'+ app.get('port') + '; press Ctrl-C to terminate.');
 });
