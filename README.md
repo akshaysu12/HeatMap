@@ -10,8 +10,4 @@ gathered from the Riot API across a series of games, it is possible to draw hexa
 on density of the plotted x,y coordintes. This allows HeatMap to highlight areas of the map in turn teaching users about
 some of their bad habits in League of Legends. 
 
-HeatMap is currently hosted at http://dev.akshaysubramanian.com. 
-
-Developer Note: Due to the recent shift in the Riot Games API to V3 endpoints we are currenly still working on updating the 
-                the API query's to receive live data. Submission will still work for users but data is not currently being 
-                 displayed. For those interested in learning about the site, check out the link on the main page. 
+HeatMap is currently hosted at http://lolheatmap.com. 
