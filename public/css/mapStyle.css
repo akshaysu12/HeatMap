@@ -54,6 +54,11 @@ body{
   margin-left: 5%;
 }
 
+#data {
+	margin-left: 5%;
+	width: 100px;
+}
+
 #info{
   margin-left: 10%;
 	color: #FFFFFF;

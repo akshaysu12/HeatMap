@@ -14,230 +14,334 @@
       //3. old death array and new death array will be combined
       //4. information is up to date and can be sent over to data vis
 
-document.addEventListener('DOMContentLoaded', checkUser);
+document.addEventListener('DOMContentLoaded', checkDetails);
 
-function checkUser()
+/*********
+Function: CheckUser
+Description: Send request to backend to determine if searched summoner is already in the database.
+Input: None
+Output:
+*********/
+function checkDetails()
 {
   document.getElementById('Submit').addEventListener('click', function(event)
   {
+
+    var opts = {
+    lines: 13,
+    // The number of lines to draw
+    length: 7,
+    // The length of each line
+    width: 4,
+    // The line thickness
+    scale: 3,
+    //scales overall size of the spinner
+    radius: 10,
+    // The radius of the inner circle
+    corners: 1,
+    // Corner roundness (0..1)
+    rotate: 0,
+    // The rotation offset
+    color: '#000',
+    // #rgb or #rrggbb
+    speed: 1,
+    // Rounds per second
+    trail: 60,
+    // Afterglow percentage
+    shadow: false,
+    // Whether to render a shadow
+    hwaccel: false,
+    // Whether to use hardware acceleration
+    className: 'spinner',
+    // The CSS class to assign to the spinner
+    zIndex: 2e9,
+    // The z-index (defaults to 2000000000)
+    top: 'auto',
+    // Top position relative to parent in px
+    left: '50%',
+    // Left position relative to parent in px
+    visibility: true };
+
+    document.getElementById('spinnerContainer').after(new Spinner(opts).spin().el);
+
+    //get form data from the user
     var summName = document.getElementById('summName').value;
     var champName = document.getElementById('champName').value;
 
-    console.log(summName);
-    console.log(champName);
 
-    var req = new XMLHttpRequest();
-    req.open("GET", "http://dev.akshaysubramanian.com/checkUser?name=" + summName, true)
-    req.addEventListener('load', function()
-    {
-      var summ = JSON.parse(req.response);
-      console.log(summ);
-      if (summ.length == 0)
-      {
-        console.log("add User");
-        addUser(summName,champName);
-      }
+    //exampleUser skips API calls and instead uses built-in DB data to show off heatmap functionality
+    if (summName == "exampleUser" && champName == "exampleChamp") {
+      console.log("example achieved!")
+      heatmap();
+    }
 
-      else {
-        console.log("getData");
-        getDatabaseData(summName, champName);
-      }
-
-    })
-    req.send(null);
+    else {
+      serverCheckUser(0).then(checkUserResponse, checkUserRetry);
+    }
   });
 }
 
-function addUser(summName,champName)
+function serverCheckUser(count) {
+  return new Promise(function(resolve, reject) {
+    var summName = document.getElementById('summName').value;
+    var champName = document.getElementById('champName').value;
+    // new req to check if user is in DB
+    var req = new XMLHttpRequest();
+    req.open("GET", "http://lolheatmap.com/checkUser?name=" + summName + "&champ=" + champName, true)
+    req.send(null);
+    req.addEventListener('load', function()
+    {
+      var resp = JSON.parse(req.response);
+      if (resp == '429') {
+        reject(count);
+      }
+
+      else {
+        resolve(resp);
+      }
+    })
+  });
+}
+
+//to-do: see if we can make this a re-usable function - problem is need to know name of function to call next
+function checkUserResponse(resp) {
+  if (resp == '500') {
+    window.location.assign("http://lolheatmap.com/error");
+  }
+
+  if (resp == 'noData') {
+    console.log("summoner does not exist");
+    window.location.assign("http://lolheatmap.com/noData");
+    return;
+  }
+
+  else {
+    console.log("inside check user response", resp);
+    var response = {};
+    getMatchList(0).then(getMatchListResponse, getMatchListRetry);
+  }
+}
+
+//to-do: see if we can make this a re-usable function - problem is need to know name of function to call again
+function checkUserRetry(count) {
+  // if 5 successive requests result in 429 requests then too many requests going out currently - stop trying
+  if (count == 5) {
+    // server under too much load page
+    window.location.assign("http://lolheatmap.com/serverError")
+  }
+  else {
+    //wait one second before trying the call again but increment the number of times it has been tried
+    window.setTimeout( function() {
+      serverCheckUser(count+1).then(getMatchList, checkUserRetry);
+    }, 1000);
+  }
+}
+
+function getMatchList(count)
 {
-  var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/addUser?name=" + summName, true)
-  req.addEventListener('load', function()
+  var summName = document.getElementById('summName').value;
+  var champName = document.getElementById('champName').value;
+
+  return new Promise(function(resolve,reject) {
+    var req = new XMLHttpRequest();
+    req.open("GET", "http://lolheatmap.com/matchList?name=" + summName + "&champ=" + champName, true)
+    req.send(null);
+    req.addEventListener('load', function()
+    {
+      var resp = JSON.parse(req.response);
+      console.log("inside promise response is: ", resp);
+      if (resp == '429') {
+        reject(count);
+      }
+
+      else {
+        resolve(resp);
+      }
+
+    })
+  })
+}
+
+function getMatchListResponse(summ) {
+  console.log("inside get match list resp summ is: ", summ);
+  var matchList = summ.matchList;
+  //set up error handling
+  if (summ == '500') {
+    window.location.assign("http://lolheatmap.com/error");
+  }
+
+  if (summ == 'noData') {
+    console.log("summoner does not exist");
+    window.location.assign("http://lolheatmap.com/noData");
+    return;
+  }
+
+
+  if (summ.recentMatchId == matchList.matches[0].gameId)
   {
-    var summ = JSON.parse(req.response);
+    console.log("skipped getting coordinates");
+    heatmap();
+  }
+
+  else
+  {
+    var traceBack = 20;
+    if (summ.recentMatchId)
+    {
+      while (matchList.matches[traceBack].gameId != summ.recentMatchId)
+      {
+        console.log("current match is: " + matchList.matches[traceBack].gameId)
+        console.log("match to stop at is: " + summ.recentMatchId)
+        traceBack = traceBack + 1;
+      }
+      if (traceBack > 20) {
+        traceBack = 20;
+      }
+    }
+    //console.log("number of games to go backwards = " + traceBack);
+    //console.log("calling getMatchData");
+    summ.recentMatchId = matchList.matches[0].gameId;
+    summ.traceBack = traceBack;
+    summ.count = 0;
     console.log(summ);
-    getDatabaseData(summName, champName);
-  })
-  req.send(null);
+    /*
+    if (summ.traceBack == 0) {
+      newMatchData(summ);
+    }
+    else {
+      traceBackMatchData(summ);
+    }
+    */
+    getMatchData(summ, matchList, traceBack);
+  }
 }
 
-function getDatabaseData(summName, champName)
-{
-  var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/getDatabaseData?name=" + summName + "&champ="+champName, true)
-  req.addEventListener('load', function()
-  {
-    var summ = JSON.parse(req.response);
-    console.log(summ);
-    if (summ.length == 0)
+//to-do: see if we can make this a re-usable function - problem is need to know name of function to call again
+function getMatchListRetry(count) {
+  // if 5 successive requests result in 429 requests then too many requests going out currently - stop trying
+  if (count == 5) {
+    // server under too much load page
+    addCoordinate("pass in -1 as something to know to stop")
+  }
+  else {
+    //wait one second before trying the call again but increment the number of times it has been tried
+    window.setTimeout( function() {
+      getMatchList(count+1).then(getMatchListResponse, getMatchListRetry);
+    }, 1000);
+  }
+}
+
+/*
+function newMatchData(summ, ) {
+
+}
+
+
+function newMatchData(summ) {
+  return new Promise(function(resolve, reject) {
+    var matchCount = traceBack;
+
+    var matchId = matchList.matches[x].gameId;
+    var req = new XMLHttpRequest();
+    req.open("GET", "http://lolheatmap.com/matchData?matchId=" + matchId,true)
+    req.send(null);
+    req.addEventListener('load', function()
     {
-      console.log("insert");
-      insertNewrow(summName, champName);
-    }
-    else
-    {
-      console.log("matchList");
-      getMatchList(summ);
-    }
-  })
-  req.send(null);
+      var matchData = JSON.parse(req.response);
+    });
 }
+*/
 
-function insertNewrow(summName, champName)
+function getMatchData(summ, matchList, traceBack)
 {
-  var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/insertIntorecentMatch?name="+summName+"&champ="+champName, true)
-  req.addEventListener('load', function()
-  {
-    var res = JSON.parse(req.response);
-    console.log(res);
-    getPostInsertData(summName, champName);
-  })
-  req.send(null);
-}
+  console.log("number of games to go backwards in getMatchData = " + traceBack);
+  var matchCount = traceBack;
 
-function getPostInsertData(summName, champName)
-{
-  var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/postInsertData?name="+summName+"&champ="+champName, true)
-  req.addEventListener('load', function()
-  {
-    var summ = JSON.parse(req.response);
-    console.log(summ);
-    getMatchList(summ);
-  })
-  req.send(null);
-}
-
-function getMatchList(summ)
-{
-  console.log("inside getMatchList summ looks like: ");
-  console.log(summ);
-  var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/matchList?id=" + summ.accountId +'&champid=' + summ.championId, true)
-  req.addEventListener('load', function()
-  {
-    var matchList = JSON.parse(req.response);
-    console.log(matchList);
-    if (matchList.endIndex == 0){
-      window.location.replace("http://dev.akshaysubramanian.com/noData");
-    }
-
-    if (summ.recentMatchId == matchList.matches[0].gameId)
-    {
-      console.log("skipped getting coordinates");
-      heatmap();
-    }
-    else
-    {
-      console.log("calling getMatchData");
-      summ.recentMatchId = matchList.matches[0].gameId;
-      console.log("most recent match id is: " + summ.recentMatchId);
-      getMatchData(summ, matchList);
-      //findParticipantData(summ, matchList)
-    }
-
-  })
-  req.send(null);
-}
-
-function getMatchData(summ, matchList)
-{
-  var matchCount = 0;
-  var deaths = [];
-
-  while (matchCount < 8 && matchList.matches[matchCount] != summ.recentMatchId)
+  while (matchCount >= 0)
   {
     (function(x)
     {
       var matchId = matchList.matches[x].gameId;
       var req = new XMLHttpRequest();
-      req.open("GET", "http://dev.akshaysubramanian.com/matchData?matchId="+matchId,true)
+      req.open("GET", "http://lolheatmap.com/matchData?matchId=" + matchId,true)
+      req.send(null);
       req.addEventListener('load', function()
       {
         var matchData = JSON.parse(req.response);
-        var participantID = findParticipantId(summ.accountId);
-        console.log("curent part id is: " + participantID)
-        if (participantID != 11)
+        var reqTwo = new XMLHttpRequest();
+        reqTwo.open("GET", 'http://lolheatmap.com/getParticipantData?matchId='+ matchId, true)
+        reqTwo.send(null);
+        reqTwo.addEventListener('load', function()
         {
+          var side = null;
+          var participantID = null;
+          var participantData = JSON.parse(reqTwo.response);
+          var participants = participantData.participantIdentities;
+          for (i = 0; i < participants.length; i++)
+          {
+            if (participants[i].player.currentAccountId == summ.accountId)
+            {
+              participantID = participants[i].participantId;
+              if (participants[i].participantId < 6) {
+                side = "blue";
+              }
+              else {
+                side = "purple";
+              }
+
+            }
+          }
+
           var frames = matchData.frames;
           for (var i = 2; i < frames.length; i++)
           {
             var events = frames[i].events;
             for (var r = 0; r < events.length; r++) {
-              if (events[r].eventType == "CHAMPION_KILL" && events[r].victimId == participantID)
+              if (events[r].type == "CHAMPION_KILL" && events[r].victimId == participantID)
               {
                 var location = [];
                 location.push(events[r].position.x);
                 location.push(events[r].position.y);
                 location = JSON.stringify(location);
-                addCoordinate(summ.championId, summ.accountId, location, matchId);
+                addCoordinate(summ.champId, summ.accountId, location, matchId, side);
               }
             }
           }
-        }
 
-        console.log(matchCount);
+          console.log("x is:" + x);
 
-        if (x == 7 || matchList.matches[x+1] == summ.recentMatchId)
-        {
-          console.log("calling heatmap");
-          updateMatch(summ.championId,summ.accountId,summ.recentMatchId);
-        }
+          if (matchList.matches[x].gameId == summ.recentMatchId)
+          {
+            console.log("calling heatmap");
+            updateMatch(summ.champId, summ.accountId, summ.recentMatchId);
+          }
+        })
       })
-      req.send(null);
     }(matchCount));
-    matchCount = matchCount + 1;
+    matchCount = matchCount - 1;
   }
 }
 
-function findParticipantId(accountId)
+function addCoordinate(champName, summName, coordinate, matchId, side)
 {
-  console.log(accountId)
-  var req = new XMLHttpRequest();
-  req.open("GET", 'http://dev.akshaysubramanian.com/getParticipantData?accountId='+accountId, true)
-  req.addEventListener('load', function()
-  {
-    var participantData = JSON.parse(req.response);
-    var participants = participantData.participantIdentities;
-    for (summoner in participants)
-    {
-      if (participants.player.currentAccountId == accountId)
-      {
-        //only taking data from blue side so participant id must be 1-5
-        if (participants.player.currentAccountId < 6) {
-          return participants.participantId;
-        }
-        else {
-          return participants.participantId;
-        }
-      }
-    }
-  })
-  req.send(null);
-}
+  var postData = {"champ":champName, "summ":summName, "loc": coordinate, "match":matchId, "side":side};
 
-function addCoordinate(champName, summName, coordinate, matchId)
-{
-  console.log("add coordinate");
-  var req  = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/addCoordinate?champ="+ champName +"&summ="+ summName + "&loc=" + coordinate + "&match=" + matchId, true);
-  req.addEventListener('load', function()
-  {
-    var res = JSON.parse(req.response);
-    console.log(res);
-  });
-  req.send(null);
+  console.log(postData);
+  var req = new XMLHttpRequest();
+  req.open('POST', "http://lolheatmap.com/addCoordinate", true);
+  req.setRequestHeader('Content-Type', 'application/json');
+  req.addEventListener('load', function() {
+    var resp = JSON.parse(req.response);
+    console.log(resp);
+  })
+  req.send(JSON.stringify(postData));
+
 }
 
 function updateMatch(champName, summName, matchId)
 {
-  console.log("update:" + champName);
-  console.log("update:" + summName);
-  console.log("update:" + matchId);
-  console.log("updating match");
   var req = new XMLHttpRequest();
-  req.open("GET", "http://dev.akshaysubramanian.com/updateMatch?champ="+ champName +"&summ="+ summName + "&match=" + matchId, true);
+  req.open("GET", "http://lolheatmap.com/updateMatch?champ="+ champName +"&summ="+ summName + "&match=" + matchId, true);
   req.addEventListener('load', function()
   {
     var res = JSON.parse(req.response);
@@ -253,6 +357,5 @@ function heatmap()
 {
   var summDisplay = document.getElementById('summName').value;
   var champDisplay = document.getElementById('champName').value;
-  console.log("heatmap client");
-  window.location.replace("http://dev.akshaysubramanian.com/heatmap?name="+summDisplay+"&champ=" +champDisplay);
+  window.location.replace("http://lolheatmap.com/heatmap?name="+summDisplay+"&champ=" +champDisplay);
 };
